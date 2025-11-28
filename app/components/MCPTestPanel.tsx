@@ -593,7 +593,7 @@ export function MCPTestPanel({
                 </span>
               )}
             </h4>
-            {result && (
+            {result != null && (
               <button
                 onClick={copyResult}
                 className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"

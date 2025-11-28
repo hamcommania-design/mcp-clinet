@@ -60,10 +60,25 @@ export async function getSessions(): Promise<ChatSession[]> {
     const sessionsWithMessages: ChatSession[] = sessions.map((session) => {
       const sessionMessages: Message[] = (messages || [])
         .filter((msg) => msg.session_id === session.id)
-        .map((msg) => ({
-          role: msg.role as 'user' | 'assistant',
-          content: msg.content,
-        }));
+        .map((msg) => {
+          const message: Message = {
+            role: msg.role as 'user' | 'assistant',
+            content: msg.content,
+          };
+          
+          // tool_calls 필드가 있으면 파싱하여 추가
+          if (msg.tool_calls) {
+            try {
+              message.toolCalls = typeof msg.tool_calls === 'string' 
+                ? JSON.parse(msg.tool_calls) 
+                : msg.tool_calls;
+            } catch (error) {
+              console.error('Error parsing tool_calls:', error);
+            }
+          }
+          
+          return message;
+        });
 
       return {
         id: session.id,
@@ -112,6 +127,7 @@ export async function createSession(
         session_id: sessionId,
         role: msg.role,
         content: msg.content,
+        tool_calls: msg.toolCalls ? JSON.stringify(msg.toolCalls) : null,
         created_at: new Date().toISOString(),
       }));
 
@@ -179,6 +195,7 @@ export async function updateSessionMessages(
         session_id: sessionId,
         role: msg.role,
         content: msg.content,
+        tool_calls: msg.toolCalls ? JSON.stringify(msg.toolCalls) : null,
         created_at: new Date().toISOString(),
       }));
 

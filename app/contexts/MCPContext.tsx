@@ -34,6 +34,14 @@ const DEFAULT_SERVERS: MCPServerConfig[] = [
     args: ["-y", "mcp-time-server"],
     description: "현재 시간과 타임존 변환 기능을 제공하는 MCP 서버",
   },
+  {
+    id: "brave-search",
+    name: "Brave Search (뉴스 검색)",
+    transport: "stdio",
+    command: "npx",
+    args: ["-y", "@modelcontextprotocol/server-brave-search"],
+    description: "웹 검색 및 최신 뉴스 검색 기능을 제공하는 MCP 서버 (Brave Search API 사용). 환경 변수에 BRAVE_API_KEY를 설정해야 합니다.",
+  },
 ];
 
 interface MCPContextType {
@@ -136,14 +144,52 @@ export function MCPProvider({ children }: MCPProviderProps) {
         const response = await fetch("/api/mcp/status");
         if (response.ok) {
           const { connectedServers } = await response.json();
-          setServers((prev) =>
-            prev.map((server) => ({
-              ...server,
-              status: connectedServers.includes(server.config.id)
-                ? "connected"
-                : "disconnected",
-            }))
+          
+          // 연결된 서버들의 도구 목록도 가져오기
+          const updatedServers = await Promise.all(
+            servers.map(async (server) => {
+              const isConnected = connectedServers.includes(server.config.id);
+              if (isConnected) {
+                try {
+                  // 서버의 도구, 프롬프트, 리소스 목록 가져오기
+                  const [toolsRes, promptsRes, resourcesRes] = await Promise.all([
+                    fetch(`/api/mcp/tools?serverId=${server.config.id}`),
+                    fetch(`/api/mcp/prompts?serverId=${server.config.id}`),
+                    fetch(`/api/mcp/resources?serverId=${server.config.id}`),
+                  ]);
+
+                  const [toolsData, promptsData, resourcesData] = await Promise.all([
+                    toolsRes.ok ? toolsRes.json() : { tools: [] },
+                    promptsRes.ok ? promptsRes.json() : { prompts: [] },
+                    resourcesRes.ok ? resourcesRes.json() : { resources: [] },
+                  ]);
+
+                  return {
+                    ...server,
+                    status: "connected" as MCPConnectionStatus,
+                    tools: toolsData.tools || [],
+                    prompts: promptsData.prompts || [],
+                    resources: resourcesData.resources || [],
+                  };
+                } catch (error) {
+                  console.error(`Failed to fetch capabilities for ${server.config.id}:`, error);
+                  return {
+                    ...server,
+                    status: "connected" as MCPConnectionStatus,
+                  };
+                }
+              }
+              return {
+                ...server,
+                status: "disconnected" as MCPConnectionStatus,
+                tools: [],
+                prompts: [],
+                resources: [],
+              };
+            })
           );
+
+          setServers(updatedServers);
         }
       } catch (error) {
         console.error("Failed to sync MCP connection status:", error);
@@ -226,7 +272,22 @@ export function MCPProvider({ children }: MCPProviderProps) {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to connect");
+        const errorMessage = data.error || "Failed to connect";
+        const suggestion = data.suggestion;
+        
+        setServers((prev) =>
+          prev.map((s) =>
+            s.config.id === serverId
+              ? {
+                  ...s,
+                  status: "error" as MCPConnectionStatus,
+                  error: errorMessage,
+                  suggestion: suggestion,
+                }
+              : s
+          )
+        );
+        throw new Error(errorMessage);
       }
 
       // Update with connected status and capabilities
@@ -240,22 +301,28 @@ export function MCPProvider({ children }: MCPProviderProps) {
                 prompts: data.prompts || [],
                 resources: data.resources || [],
                 error: undefined,
+                suggestion: undefined,
               }
             : s
         )
       );
     } catch (error) {
-      setServers((prev) =>
-        prev.map((s) =>
-          s.config.id === serverId
-            ? {
-                ...s,
-                status: "error" as MCPConnectionStatus,
-                error: error instanceof Error ? error.message : "Connection failed",
-              }
-            : s
-        )
-      );
+      // 이미 오류 상태로 설정된 경우 (위의 if (!response.ok) 블록에서 처리됨)
+      // 그렇지 않은 경우에만 여기서 처리
+      const server = servers.find((s) => s.config.id === serverId);
+      if (server?.status !== "error") {
+        setServers((prev) =>
+          prev.map((s) =>
+            s.config.id === serverId
+              ? {
+                  ...s,
+                  status: "error" as MCPConnectionStatus,
+                  error: error instanceof Error ? error.message : "Connection failed",
+                }
+              : s
+          )
+        );
+      }
       throw error;
     }
   }, [servers]);

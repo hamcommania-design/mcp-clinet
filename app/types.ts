@@ -1,6 +1,22 @@
+// 도구 호출 정보
+export interface ToolCall {
+  id: string;
+  serverId: string;
+  serverName: string;
+  toolName: string;
+  args: Record<string, unknown>;
+  status: "pending" | "running" | "success" | "error";
+  result?: MCPToolCallResult;
+  error?: string;
+  startTime?: number;
+  endTime?: number;
+}
+
+// 메시지 타입 (도구 호출 정보 포함)
 export interface Message {
   role: "user" | "assistant";
   content: string;
+  toolCalls?: ToolCall[];
 }
 
 export interface ChatSession {
@@ -37,6 +53,7 @@ export interface MCPServerState {
   config: MCPServerConfig;
   status: MCPConnectionStatus;
   error?: string;
+  suggestion?: string;
   tools: MCPTool[];
   prompts: MCPPrompt[];
   resources: MCPResource[];
@@ -77,6 +94,7 @@ export interface MCPToolCallResult {
     text?: string;
     data?: string;
     mimeType?: string;
+    url?: string; // Storage에 업로드된 이미지의 URL
   }>;
   isError?: boolean;
 }
@@ -105,5 +123,26 @@ export interface MCPResourceResult {
 export interface MCPSettings {
   version: string;
   servers: MCPServerConfig[];
+}
+
+// 활성화된 도구 정보 (채팅에서 사용할 도구 선택용)
+export interface EnabledTool {
+  serverId: string;
+  serverName: string;
+  toolName: string;
+  description?: string;
+}
+
+// Chat API 요청 타입
+export interface ChatRequest {
+  messages: Message[];
+  enabledTools?: EnabledTool[];
+  mcpEnabled?: boolean;
+}
+
+// Chat API 응답의 도구 호출 정보
+export interface ChatToolCallInfo {
+  toolCalls: ToolCall[];
+  finalResponse: string;
 }
 

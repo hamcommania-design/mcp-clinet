@@ -118,6 +118,13 @@ export function MCPServerList({
               <p className="text-xs text-muted-foreground mt-1">
                 {getStatusText(server)}
               </p>
+              {server.status === "error" && server.suggestion && (
+                <div className="mt-2 p-2 rounded bg-blue-50 border border-blue-200">
+                  <p className="text-xs text-blue-800">
+                    <strong>💡 제안:</strong> {server.suggestion}
+                  </p>
+                </div>
+              )}
               {server.status === "connected" && (
                 <div className="flex gap-3 mt-2 text-xs text-muted-foreground">
                   <span>Tools: {server.tools.length}</span>

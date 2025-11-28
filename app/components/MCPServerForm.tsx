@@ -54,11 +54,21 @@ export function MCPServerForm({ server, onSubmit, onCancel }: MCPServerFormProps
       if (envVars.trim()) {
         config.env = {};
         envVars.trim().split("\n").forEach((line) => {
-          const [key, ...valueParts] = line.split("=");
+          const trimmedLine = line.trim();
+          if (!trimmedLine || trimmedLine.startsWith("#")) return; // 빈 줄이나 주석 무시
+          const [key, ...valueParts] = trimmedLine.split("=");
           if (key && valueParts.length > 0) {
-            config.env![key.trim()] = valueParts.join("=").trim();
+            const value = valueParts.join("=").trim();
+            // 빈 값이 아닌 경우에만 추가
+            if (value) {
+              config.env![key.trim()] = value;
+            }
           }
         });
+        // 빈 env 객체는 제거
+        if (Object.keys(config.env!).length === 0) {
+          delete config.env;
+        }
       }
     } else {
       config.url = url.trim();
@@ -160,13 +170,34 @@ export function MCPServerForm({ server, onSubmit, onCancel }: MCPServerFormProps
                 <textarea
                   value={envVars}
                   onChange={(e) => setEnvVars(e.target.value)}
-                  placeholder="KEY=value&#10;ANOTHER_KEY=another_value"
+                  placeholder="BRAVE_API_KEY=your_api_key_here"
                   rows={3}
                   className="w-full px-3 py-2 rounded-md border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none font-mono text-sm"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  각 줄에 KEY=value 형식으로 입력
+                  각 줄에 KEY=value 형식으로 입력 (예: BRAVE_API_KEY=your_key)
                 </p>
+                {name.toLowerCase().includes("brave") && (
+                  <div className="mt-2 p-2 rounded bg-blue-50 border border-blue-200">
+                    <p className="text-xs text-blue-800 mb-2">
+                      <strong>💡 Brave Search API 키 발급:</strong>
+                      <br />
+                      <a
+                        href="https://brave.com/search/api/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline hover:text-blue-900"
+                      >
+                        https://brave.com/search/api/
+                      </a>
+                      에서 무료 API 키를 발급받으세요.
+                    </p>
+                    <p className="text-xs text-blue-800">
+                      <strong>⚠️ 중요:</strong> 환경 변수 필드에 반드시 <code className="bg-blue-100 px-1 rounded">BRAVE_API_KEY=your_api_key_here</code> 형식으로 입력하세요. 
+                      API 키가 없으면 &quot;Connection closed&quot; 오류가 발생합니다.
+                    </p>
+                  </div>
+                )}
               </div>
             </>
           ) : (

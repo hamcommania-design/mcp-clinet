@@ -22,11 +22,51 @@ const CodeBlock = memo(
     className?: string;
     children?: React.ReactNode;
   }) => {
+    if (inline) {
+      return (
+        <code className="px-1.5 py-0.5 rounded bg-muted text-foreground text-sm font-mono" {...props}>
+          {children}
+        </code>
+      );
+    }
+
+    // 블록 코드는 pre 컴포넌트에서 처리
+    return (
+      <code className={className} {...props}>
+        {children}
+      </code>
+    );
+  }
+);
+
+CodeBlock.displayName = "CodeBlock";
+
+const PreBlock = memo(
+  ({
+    children,
+    ...props
+  }: {
+    children?: React.ReactNode;
+  }) => {
     const [copied, setCopied] = useState(false);
     const [isDark, setIsDark] = useState(false);
+
+    // children에서 code 요소의 className과 내용 추출
+    let className = '';
+    let codeString = '';
+
+    if (children && typeof children === 'object' && 'props' in children) {
+      const codeProps = (children as { props?: { className?: string; children?: React.ReactNode } }).props;
+      if (codeProps) {
+        className = codeProps.className || '';
+        codeString = String(codeProps.children || '').replace(/\n$/, '');
+      }
+    } else {
+      codeString = String(children || '').replace(/\n$/, '');
+    }
+
     const match = /language-(\w+)/.exec(className || "");
     const language = match ? match[1] : "";
-    const codeString = String(children).replace(/\n$/, "");
 
     useEffect(() => {
       const checkDarkMode = () => {
@@ -51,16 +91,8 @@ const CodeBlock = memo(
       setTimeout(() => setCopied(false), 2000);
     };
 
-    if (inline) {
-      return (
-        <code className="px-1.5 py-0.5 rounded bg-muted text-foreground text-sm font-mono" {...props}>
-          {children}
-        </code>
-      );
-    }
-
     return (
-      <div className="relative group my-4">
+      <pre className="relative group my-4" {...props}>
         <div className="absolute top-2 right-2 flex items-center gap-2 z-10">
           {language && (
             <span className="text-xs text-muted-foreground font-mono px-2 py-1 bg-background/80 rounded">
@@ -90,16 +122,15 @@ const CodeBlock = memo(
             background: isDark ? "rgb(30, 30, 30)" : "rgb(250, 250, 250)",
           }}
           PreTag="div"
-          {...props}
         >
           {codeString}
         </SyntaxHighlighter>
-      </div>
+      </pre>
     );
   }
 );
 
-CodeBlock.displayName = "CodeBlock";
+PreBlock.displayName = "PreBlock";
 
 export const MemoizedMarkdown = memo(({ content }: MemoizedMarkdownProps) => {
   return (
@@ -108,6 +139,7 @@ export const MemoizedMarkdown = memo(({ content }: MemoizedMarkdownProps) => {
         remarkPlugins={[remarkGfm]}
         components={{
           code: CodeBlock,
+          pre: PreBlock,
           a: ({ node, ...props }) => (
             <a
               {...props}
