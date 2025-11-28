@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Send } from "lucide-react";
+import Link from "next/link";
+import { Send, Settings, Plug } from "lucide-react";
 import { MemoizedMarkdown } from "./components/MemoizedMarkdown";
 import { ChatSidebar } from "./components/ChatSidebar";
 import { Snowfall } from "./components/Snowfall";
 import { Message, ChatSession } from "./types";
+import { useMCP } from "./contexts/MCPContext";
 import {
   getSessions,
   createSession,
@@ -28,6 +30,9 @@ export default function Home() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { servers, getConnectedServers } = useMCP();
+
+  const connectedCount = getConnectedServers().length;
 
   // DB에서 채팅 세션 불러오기 및 localStorage 마이그레이션
   useEffect(() => {
@@ -325,8 +330,25 @@ export default function Home() {
       {/* 메인 채팅 영역 */}
       <div className="flex-1 flex flex-col relative z-10">
         {/* 헤더 */}
-        <header className="border-b border-border px-4 py-3 flex items-center justify-between">
+        <header className="border-b border-border px-4 py-3 flex items-center justify-between bg-background/80 backdrop-blur-sm">
           <h1 className="text-xl font-semibold">AI 채팅</h1>
+          <div className="flex items-center gap-2">
+            {/* MCP 연결 상태 표시 */}
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted text-sm">
+              <Plug size={14} className={connectedCount > 0 ? "text-green-500" : "text-muted-foreground"} />
+              <span className="text-muted-foreground">
+                MCP: {connectedCount}/{servers.length}
+              </span>
+            </div>
+            {/* 설정 버튼 */}
+            <Link
+              href="/settings"
+              className="p-2 rounded-lg hover:bg-muted transition-colors"
+              title="MCP 서버 설정"
+            >
+              <Settings size={20} />
+            </Link>
+          </div>
         </header>
 
         {/* 메시지 영역 */}
