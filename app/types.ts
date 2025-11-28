@@ -23,6 +23,7 @@ export interface MCPServerConfig {
   id: string;
   name: string;
   transport: MCPTransportType;
+  description?: string;
   // For STDIO transport
   command?: string;
   args?: string[];

@@ -32,6 +32,9 @@ importers:
       lucide-react:
         specifier: ^0.555.0
         version: 0.555.0(react@19.1.0)
+      mcp-time-server:
+        specifier: ^1.0.1
+        version: 1.0.1
       next:
         specifier: 15.5.6
         version: 15.5.6(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -1708,6 +1711,11 @@ packages:
     resolution: {integrity: sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g==}
     engines: {node: '>= 0.4'}
 
+  mcp-time-server@1.0.1:
+    resolution: {integrity: sha512-wP2qZiKHTs3ufM9kHhkvqtoW8wo5A1/zmzLh5jmHM+g/G1XqIUoBmlXziBM8Am2Q9atEiZJrUn6tdEJOm9OnfA==}
+    engines: {node: '>=18.0.0'}
+    hasBin: true
+
   mdast-util-find-and-replace@3.0.2:
     resolution: {integrity: sha512-Tmd1Vg/m3Xz43afeNxDIhWRtFZgM2VLyaf4vSTYwudTyeuTneoL3qtWMA5jeLyz/O1vDJmmV4QuScFCA2tBPwg==}
 
@@ -2464,6 +2472,9 @@ packages:
     peerDependencies:
       zod: ^3.25 || ^4
 
+  zod@3.25.76:
+    resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
+
   zod@4.1.13:
     resolution: {integrity: sha512-AvvthqfqrAhNH9dnfmrfKzX5upOdjUVJYFqNSlkmGf64gRaTzlPwz99IHYnVs28qYAybvAlBV+H7pn0saFY4Ig==}
 
@@ -2666,6 +2677,24 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
+
+  '@modelcontextprotocol/sdk@1.23.0(zod@3.25.76)':
+    dependencies:
+      ajv: 8.17.1
+      ajv-formats: 3.0.1(ajv@8.17.1)
+      content-type: 1.0.5
+      cors: 2.8.5
+      cross-spawn: 7.0.6
+      eventsource: 3.0.7
+      eventsource-parser: 3.0.6
+      express: 5.1.0
+      express-rate-limit: 7.5.1(express@5.1.0)
+      pkce-challenge: 5.0.1
+      raw-body: 3.0.2
+      zod: 3.25.76
+      zod-to-json-schema: 3.25.0(zod@3.25.76)
+    transitivePeerDependencies:
+      - supports-color
 
   '@modelcontextprotocol/sdk@1.23.0(zod@4.1.13)':
     dependencies:
@@ -4214,6 +4243,14 @@ snapshots:
 
   math-intrinsics@1.1.0: {}
 
+  mcp-time-server@1.0.1:
+    dependencies:
+      '@modelcontextprotocol/sdk': 1.23.0(zod@3.25.76)
+      zod: 3.25.76
+    transitivePeerDependencies:
+      - '@cfworker/json-schema'
+      - supports-color
+
   mdast-util-find-and-replace@3.0.2:
     dependencies:
       '@types/mdast': 4.0.4
@@ -5361,9 +5398,15 @@ snapshots:
 
   yocto-queue@0.1.0: {}
 
+  zod-to-json-schema@3.25.0(zod@3.25.76):
+    dependencies:
+      zod: 3.25.76
+
   zod-to-json-schema@3.25.0(zod@4.1.13):
     dependencies:
       zod: 4.1.13
+
+  zod@3.25.76: {}
 
   zod@4.1.13: {}
 

@@ -24,6 +24,18 @@ import type {
 const MCP_SERVERS_STORAGE_KEY = "mcp-servers";
 const MCP_SETTINGS_VERSION = "1.0";
 
+// 기본 MCP 서버 설정
+const DEFAULT_SERVERS: MCPServerConfig[] = [
+  {
+    id: "time-server",
+    name: "Time Server",
+    transport: "stdio",
+    command: "npx",
+    args: ["-y", "mcp-time-server"],
+    description: "현재 시간과 타임존 변환 기능을 제공하는 MCP 서버",
+  },
+];
+
 interface MCPContextType {
   servers: MCPServerState[];
   addServer: (config: MCPServerConfig) => void;
@@ -74,7 +86,25 @@ export function MCPProvider({ children }: MCPProviderProps) {
       const savedServers = localStorage.getItem(MCP_SERVERS_STORAGE_KEY);
       if (savedServers) {
         const configs: MCPServerConfig[] = JSON.parse(savedServers);
-        const serverStates: MCPServerState[] = configs.map((config) => ({
+        
+        // 기본 서버가 없으면 추가
+        const existingIds = new Set(configs.map((c) => c.id));
+        const missingDefaults = DEFAULT_SERVERS.filter(
+          (ds) => !existingIds.has(ds.id)
+        );
+        const allConfigs = [...configs, ...missingDefaults];
+        
+        const serverStates: MCPServerState[] = allConfigs.map((config) => ({
+          config,
+          status: "disconnected" as MCPConnectionStatus,
+          tools: [],
+          prompts: [],
+          resources: [],
+        }));
+        setServers(serverStates);
+      } else {
+        // 저장된 서버가 없으면 기본 서버로 초기화
+        const serverStates: MCPServerState[] = DEFAULT_SERVERS.map((config) => ({
           config,
           status: "disconnected" as MCPConnectionStatus,
           tools: [],
